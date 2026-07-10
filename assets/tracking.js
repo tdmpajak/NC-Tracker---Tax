@@ -19,6 +19,7 @@ const modalMsg = document.getElementById('modalMsg');
 const modalAuthPassword = document.getElementById('modalAuthPassword');
 
 let allRows = [];
+let lastDataSnapshot = ''; // dipakai untuk deteksi apakah data benar-benar berubah
 let currentFilter = 'all';
 let activeRow = null;
 let modalFile = null;
@@ -47,9 +48,20 @@ async function loadData(silent = false) {
     const res = await fetch(`${API_URL}?action=list`);
     const result = await res.json();
     if (!result.success) throw new Error(result.error || 'Gagal memuat data');
+
+    const newSnapshot = JSON.stringify(result.data);
+    const dataChanged = newSnapshot !== lastDataSnapshot;
     allRows = result.data;
-    renderStats();
-    renderTable();
+
+    // Render ulang tabel HANYA kalau datanya benar-benar berubah (atau ini load pertama kali).
+    // Kalau tidak, tombol-tombol yang sedang mau diklik user tidak diganti-ganti tiap 3 detik --
+    // itu penyebab bug "harus klik 2x" sebelumnya (tombol lama hilang tepat saat diklik).
+    if (dataChanged || !silent) {
+      lastDataSnapshot = newSnapshot;
+      renderStats();
+      renderTable();
+    }
+
     if (lastUpdated) {
       const now = new Date();
       const hh = String(now.getHours()).padStart(2, '0');
@@ -128,7 +140,9 @@ function renderTable() {
       </td>
       <td class="cell-nc">${escapeHtml(r['No Payment Request'] || '-')}</td>
       <td class="cell-pic">
-        ${r['File Berkas'] ? `<button class="link-inline-btn" data-url="${escapeHtml(r['File Berkas'])}" data-docid="${escapeHtml(r['ID'])}">Lihat PDF</button>` : '<span style="color:var(--ink-soft);">–</span>'}
+        ${r['File Berkas'] && !r['File Hasil Verifikasi'] ? `<button class="link-inline-btn" data-url="${escapeHtml(r['File Berkas'])}" data-docid="${escapeHtml(r['ID'])}">Lihat PDF</button>` : ''}
+        ${r['File Berkas'] && r['File Hasil Verifikasi'] ? `<span style="color:var(--ink-soft); font-size:12.5px;">Sudah diverifikasi</span>` : ''}
+        ${!r['File Berkas'] ? '<span style="color:var(--ink-soft);">–</span>' : ''}
         <span class="phone">${formatDate(r['Timestamp Kirim'])}</span>
       </td>
       <td><span class="pill ${statusPillClass(r['Status'])}">${escapeHtml(r['Status'] || 'Menunggu Verifikasi')}</span></td>
