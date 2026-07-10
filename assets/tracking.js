@@ -16,6 +16,7 @@ const modalDzText = document.getElementById('modalDzText');
 const modalCancel = document.getElementById('modalCancel');
 const modalSubmit = document.getElementById('modalSubmit');
 const modalMsg = document.getElementById('modalMsg');
+const modalAuthPassword = document.getElementById('modalAuthPassword');
 
 let allRows = [];
 let currentFilter = 'all';
@@ -127,12 +128,12 @@ function renderTable() {
       </td>
       <td class="cell-nc">${escapeHtml(r['No Payment Request'] || '-')}</td>
       <td class="cell-pic">
-        ${r['File Berkas'] ? `<button class="link-inline-btn" data-url="${escapeHtml(r['File Berkas'])}" data-cabang="${escapeHtml(r['Cabang'])}">Lihat PDF</button>` : '<span style="color:var(--ink-soft);">–</span>'}
+        ${r['File Berkas'] ? `<button class="link-inline-btn" data-url="${escapeHtml(r['File Berkas'])}" data-docid="${escapeHtml(r['ID'])}">Lihat PDF</button>` : '<span style="color:var(--ink-soft);">–</span>'}
         <span class="phone">${formatDate(r['Timestamp Kirim'])}</span>
       </td>
       <td><span class="pill ${statusPillClass(r['Status'])}">${escapeHtml(r['Status'] || 'Menunggu Verifikasi')}</span></td>
       <td class="cell-pic">
-        ${r['File Hasil Verifikasi'] ? `<button class="link-inline-btn" data-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-cabang="${escapeHtml(r['Cabang'])}">Lihat Hasil</button>` : '<span style="color:var(--ink-soft);">–</span>'}
+        ${r['File Hasil Verifikasi'] ? `<button class="link-inline-btn" data-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Lihat Hasil</button>` : '<span style="color:var(--ink-soft);">–</span>'}
         ${r['Tanggal Verifikasi'] ? `<span class="phone">${formatDate(r['Tanggal Verifikasi'])}</span>` : ''}
       </td>
       <td>${r['Status'] === 'Menunggu Verifikasi'
@@ -147,25 +148,34 @@ function renderTable() {
   });
 
   tableBody.querySelectorAll('button.link-inline-btn').forEach(btn => {
-    btn.addEventListener('click', () => openProtectedLink(btn.dataset.url, btn.dataset.cabang));
+    btn.addEventListener('click', () => openProtectedLink(btn.dataset.url, btn.dataset.docid));
   });
 }
 
-// Minta password cabang sebelum membuka link PDF (PDF-nya sendiri tidak dienkripsi --
-// ini murni gerbang password di sisi website, lihat catatan di assets/branch-config.js).
-function openProtectedLink(url, cabang) {
-  const expected = BRANCH_PASSWORDS[cabang];
-  if (!expected) {
-    window.open(url, '_blank');
-    return;
-  }
-  const input = window.prompt(`Masukkan password cabang ${cabang} untuk membuka berkas ini:`);
+// Minta ID pengajuan (nomor NCT-xxxx/tgl) sebelum membuka link PDF -- PDF-nya sendiri
+// tidak dienkripsi, ini murni gerbang di sisi website. Setiap pengajuan punya ID unik
+// sendiri, jadi PIC/admin harus tahu nomor ID dokumen tersebut untuk bisa membukanya.
+function openProtectedLink(url, correctId) {
+  const input = window.prompt('Masukkan ID pengajuan (contoh: NCT-0003/100726) untuk membuka berkas ini:');
   if (input === null) return; // dibatalkan
-  if (input === expected) {
-    window.open(url, '_blank');
+  if (input.trim().toUpperCase() === String(correctId).trim().toUpperCase()) {
+    navigateTo(url);
   } else {
-    alert('Password salah.');
+    alert('ID pengajuan salah.');
   }
+}
+
+// Membuka link di tab baru dengan cara yang lebih andal daripada window.open()
+// (window.open sering diblokir popup blocker browser kalau dipanggil setelah
+// dialog seperti prompt()/alert() -- teknik klik elemen <a> ini jauh lebih aman).
+function navigateTo(url) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 function escapeHtml(str) {
@@ -194,6 +204,7 @@ function openModal(id) {
   modalCatatan.value = activeRow['Catatan Admin'] || '';
   modalDzText.innerHTML = '<strong>Klik untuk pilih file</strong> (opsional jika hanya menolak)';
   modalFile = null;
+  modalAuthPassword.value = '';
   modalMsg.textContent = '';
   modalMsg.className = 'status-msg';
   modalOverlay.classList.add('open');
@@ -236,6 +247,13 @@ modalSubmit.addEventListener('click', async () => {
   if (!activeRow) return;
   modalMsg.textContent = '';
   modalMsg.className = 'status-msg';
+
+  if (modalAuthPassword.value !== SUBMIT_GATE_PASSWORD) {
+    modalMsg.textContent = 'Password otorisasi salah.';
+    modalMsg.classList.add('err');
+    return;
+  }
+
   modalSubmit.disabled = true;
   modalSubmit.textContent = 'Menyimpan…';
 
