@@ -136,10 +136,10 @@ function renderTable() {
       <td><span class="badge-cabang">${escapeHtml(r['Cabang'] || '-')}</span></td>
       <td class="cell-pic">
         ${r['No Telpon']
-          ? `<a class="name" href="${toWaLink(r['No Telpon'])}" target="_blank" style="color:var(--success); text-decoration:none;">💬 ${escapeHtml(r['Nama PIC'] || '-')}</a>`
-          : `<span class="name">${escapeHtml(r['Nama PIC'] || '-')}</span>`}
+          ? `<a class="name name-truncate" href="${toWaLink(r['No Telpon'])}" target="_blank" title="${escapeHtml(r['Nama PIC'] || '')}" style="color:var(--success); text-decoration:none;">💬 ${escapeHtml(r['Nama PIC'] || '-')}</a>`
+          : `<span class="name name-truncate" title="${escapeHtml(r['Nama PIC'] || '')}">${escapeHtml(r['Nama PIC'] || '-')}</span>`}
       </td>
-      <td class="cell-nc">${escapeHtml(r['No Payment Request'] || '-')}</td>
+      <td class="cell-nc" title="${escapeHtml((r['No Payment Request'] || '').replace(/\n/g, ', '))}">${escapeHtml((r['No Payment Request'] || '-').split('\n')[0])}${r['No Payment Request'] && r['No Payment Request'].includes('\n') ? ' …' : ''}</td>
       <td class="cell-pic">
         ${r['File Berkas'] ? `<button class="link-inline-btn" data-url="${escapeHtml(r['File Berkas'])}" data-docid="${escapeHtml(r['ID'])}">Lihat PDF</button>` : '<span style="color:var(--ink-soft);">–</span>'}
         <span class="phone">${formatDate(r['Timestamp Kirim'])}</span>
