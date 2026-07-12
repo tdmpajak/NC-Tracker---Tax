@@ -1,6 +1,7 @@
 // ---------- Elemen ----------
 const form = document.getElementById('submitForm');
-const cabangSelect = document.getElementById('cabang');
+const cabangInput = document.getElementById('cabang');
+const cabangDatalist = document.getElementById('cabangDatalist');
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('fileInput');
 const dzText = document.getElementById('dzText');
@@ -9,12 +10,16 @@ const statusMsg = document.getElementById('statusMsg');
 
 let selectedFile = null;
 
-// ---------- Isi dropdown cabang dari daftar tetap (lihat assets/branch-config.js) ----------
+// ---------- Isi datalist cabang dari daftar tetap (lihat assets/branch-config.js) ----------
+// Pakai <input> + <datalist> (bukan <select>) supaya bisa diketik/di-search,
+// bukan cuma scroll manual di antara 32 kode cabang.
 BRANCH_LIST.forEach((code) => {
   const opt = document.createElement('option');
   opt.value = code;
-  opt.textContent = code;
-  cabangSelect.appendChild(opt);
+  cabangDatalist.appendChild(opt);
+});
+cabangInput.addEventListener('input', () => {
+  cabangInput.value = cabangInput.value.toUpperCase();
 });
 
 // ---------- Dropzone ----------
@@ -68,14 +73,14 @@ form.addEventListener('submit', async (e) => {
   statusMsg.textContent = '';
   statusMsg.className = 'status-msg';
 
-  const cabang = cabangSelect.value;
+  const cabang = cabangInput.value.trim().toUpperCase();
   const namaPic = document.getElementById('namaPic').value.trim();
   const noTelpon = document.getElementById('noTelpon').value.trim();
   const noPaymentRequest = document.getElementById('noPaymentRequest').value.trim();
   const linkPaymentRequest = document.getElementById('linkPaymentRequest').value.trim();
 
   if (!cabang || !BRANCH_LIST.includes(cabang)) {
-    statusMsg.textContent = 'Kode cabang wajib dipilih.';
+    statusMsg.textContent = 'Kode cabang tidak valid. Pilih salah satu dari daftar yang muncul saat mengetik.';
     statusMsg.classList.add('err');
     return;
   }
