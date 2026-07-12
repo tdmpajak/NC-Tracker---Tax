@@ -285,7 +285,7 @@ body {
   overflow: hidden;
   box-shadow: var(--shadow);
 }
-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: auto; }
 thead th {
   text-align: left;
   font-size: 11px;
