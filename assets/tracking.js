@@ -145,7 +145,7 @@ function renderTable() {
       </td>
       <td><span class="pill ${statusPillClass(r['Status'])}">${escapeHtml(r['Status'] || 'Menunggu Verifikasi')}</span></td>
       <td class="cell-pic">
-        ${r['File Hasil Verifikasi'] ? `<button class="link-inline-btn" data-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Lihat Hasil</button> · <button class="link-inline-btn" data-download-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Unduh</button>` : '<span style="color:var(--ink-soft);">–</span>'}
+        ${r['File Hasil Verifikasi'] ? `<div style="display:flex; align-items:center; gap:6px;"><button class="link-inline-btn" data-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Lihat Hasil</button><span style="color:var(--ink-soft);">·</span><button class="link-inline-btn" data-download-url="${escapeHtml(r['File Hasil Verifikasi'])}" data-docid="${escapeHtml(r['ID'])}">Unduh</button></div>` : '<span style="color:var(--ink-soft);">–</span>'}
         ${r['Tanggal Verifikasi'] ? `<span class="phone">${formatDate(r['Tanggal Verifikasi'])}</span>` : ''}
       </td>
       <td>${r['Status'] === 'Menunggu Verifikasi'
@@ -229,7 +229,11 @@ function openModal(id) {
   if (!activeRow) return;
   modalSub.textContent = `Cabang ${activeRow['Cabang']} — PIC ${activeRow['Nama PIC']}`;
   modalStatus.value = activeRow['Status'] === 'Ditolak' ? 'Ditolak' : 'Terverifikasi';
-  modalAdmin.value = activeRow['Admin Verifikator'] || '';
+  // Cocokkan data admin lama (mis. "widi" huruf kecil) ke opsi dropdown yang sesuai,
+  // supaya tidak tampil kosong hanya karena beda kapitalisasi.
+  const prevAdmin = (activeRow['Admin Verifikator'] || '').trim().toLowerCase();
+  const matchedOption = Array.from(modalAdmin.options).find(o => o.value.toLowerCase() === prevAdmin);
+  modalAdmin.value = matchedOption ? matchedOption.value : '';
   modalCatatan.value = activeRow['Catatan Admin'] || '';
   modalDzText.innerHTML = '<strong>Klik untuk pilih file</strong> (opsional jika hanya menolak)';
   modalFile = null;
