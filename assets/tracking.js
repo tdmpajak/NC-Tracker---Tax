@@ -182,7 +182,7 @@ function renderTable() {
 // tidak dienkripsi, ini murni gerbang di sisi website. Setiap pengajuan punya ID unik
 // sendiri, jadi PIC/admin harus tahu nomor ID dokumen tersebut untuk bisa membukanya.
 function openProtectedLink(url, correctId) {
-  const input = window.prompt('Masukkan ID pengajuan (contoh: NCT-0003/100726) untuk membuka berkas ini:');
+  const input = window.prompt('Masukkan ID pengajuan (contoh: NCT-0001/100726-K3M9) untuk membuka berkas ini:');
   if (input === null) return; // dibatalkan
   if (input.trim().toUpperCase() === String(correctId).trim().toUpperCase()) {
     navigateTo(url);
