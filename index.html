@@ -6,7 +6,7 @@
 <title>Kirim Berkas — NC Tracker Tax</title>
 <link rel="stylesheet" href="assets/style.css">
 </head>
-<body>
+<body class="compact-form">
 
 <div class="topbar">
   <div class="topbar-inner">
@@ -47,14 +47,14 @@
         <div class="field required">
           <label for="noPaymentRequest">No. Payment Request (NC)</label>
           <div class="hint">Jika lebih dari satu, tulis satu per baris.</div>
-          <textarea id="noPaymentRequest" rows="3" placeholder="NC/XXX/XX/XXXXX
+          <textarea id="noPaymentRequest" rows="2" placeholder="NC/XXX/XX/XXXXX
 NC/XXX/XX/XXXXX" required></textarea>
         </div>
 
         <div class="field required">
           <label for="linkPaymentRequest">Link Payment Request</label>
           <div class="hint">Jika lebih dari satu, tulis satu per baris.</div>
-          <textarea id="linkPaymentRequest" rows="3" placeholder="https://teds2.tunasdwipamatra.com/web#id=....." required></textarea>
+          <textarea id="linkPaymentRequest" rows="2" placeholder="https://teds2.tunasdwipamatra.com/web#id=....." required></textarea>
         </div>
 
         <div class="field full required">
@@ -76,15 +76,13 @@ NC/XXX/XX/XXXXX" required></textarea>
     </form>
   </div>
 
-  <div class="card" style="margin-top:20px; padding:20px 24px;">
-    <div style="font-weight:700; font-size:14px; margin-bottom:10px;">Butuh bantuan? Hubungi Helpdesk</div>
-    <div style="display:flex; gap:24px; flex-wrap:wrap;">
-      <a href="https://wa.me/6285709631983" target="_blank" style="display:flex; align-items:center; gap:8px; color:var(--success); text-decoration:none; font-weight:600; font-size:13.5px;">💬 Widi — 085709631983</a>
-      <a href="https://wa.me/628996423769" target="_blank" style="display:flex; align-items:center; gap:8px; color:var(--success); text-decoration:none; font-weight:600; font-size:13.5px;">💬 Gita — 08996423769</a>
-    </div>
+  <div class="foot-bar">
+    <span>Berkas tersimpan otomatis ke Google Drive &amp; tercatat di Google Sheets.</span>
+    <span class="foot-bar-sep">•</span>
+    <span>Butuh bantuan?</span>
+    <a href="https://wa.me/6285709631983" target="_blank" class="foot-bar-link">💬 Widi</a>
+    <a href="https://wa.me/628996423769" target="_blank" class="foot-bar-link">💬 Gita</a>
   </div>
-
-  <footer class="foot">Berkas tersimpan otomatis ke Google Drive &amp; tercatat di Google Sheets.</footer>
 </div>
 
 <script src="assets/branch-config.js"></script>
