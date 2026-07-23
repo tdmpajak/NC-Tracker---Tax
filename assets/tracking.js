@@ -4,26 +4,12 @@ const searchInput = document.getElementById('searchInput');
 const filterTabs = document.getElementById('filterTabs');
 const refreshBtn = document.getElementById('refreshBtn');
 const lastUpdated = document.getElementById('lastUpdated');
-
-const modalOverlay = document.getElementById('modalOverlay');
-const modalSub = document.getElementById('modalSub');
-const modalStatus = document.getElementById('modalStatus');
-const modalAdmin = document.getElementById('modalAdmin');
-const modalCatatan = document.getElementById('modalCatatan');
-const modalDropzone = document.getElementById('modalDropzone');
-const modalFileInput = document.getElementById('modalFileInput');
-const modalDzText = document.getElementById('modalDzText');
-const modalCancel = document.getElementById('modalCancel');
-const modalSubmit = document.getElementById('modalSubmit');
-const modalMsg = document.getElementById('modalMsg');
-const modalAuthPassword = document.getElementById('modalAuthPassword');
+const dashSidebar = document.getElementById('dashSidebar');
 
 let allRows = [];
 let lastDataSnapshot = ''; // dipakai untuk deteksi apakah data benar-benar berubah
 let currentFilter = 'all';
-let activeRow = null;
-let modalFile = null;
-let isModalOpen = false;
+let currentJenis = 'NC - Aktual'; // dashboard aktif di sidebar kiri, default: NC - Aktual
 let isFetching = false; // cegah request numpuk kalau refresh sebelumnya belum selesai
 
 // ---------- Load data ----------
@@ -35,11 +21,11 @@ async function loadData(silent = false) {
   if (lastUpdated) lastUpdated.textContent = '⏳ memperbarui…';
 
   if (!silent) {
-    tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">Memuat data…</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">Memuat data…</td></tr>`;
   }
 
   if (!API_URL || API_URL.includes('PASTE_URL')) {
-    tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">API_URL belum dikonfigurasi (lihat assets/config.js).</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">API_URL belum dikonfigurasi (lihat assets/config.js).</td></tr>`;
     isFetching = false;
     return;
   }
@@ -54,8 +40,6 @@ async function loadData(silent = false) {
     allRows = result.data;
 
     // Render ulang tabel HANYA kalau datanya benar-benar berubah (atau ini load pertama kali).
-    // Kalau tidak, tombol-tombol yang sedang mau diklik user tidak diganti-ganti tiap 3 detik --
-    // itu penyebab bug "harus klik 2x" sebelumnya (tombol lama hilang tepat saat diklik).
     if (dataChanged || !silent) {
       lastDataSnapshot = newSnapshot;
       renderStats();
@@ -71,21 +55,25 @@ async function loadData(silent = false) {
     }
   } catch (err) {
     if (!silent) {
-      tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">Gagal memuat data: ${err.message}</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">Gagal memuat data: ${err.message}</td></tr>`;
     }
     if (lastUpdated) lastUpdated.textContent = '🔴 gagal memperbarui';
-    // Kalau silent (auto-refresh) dan gagal, biarkan data lama tetap tampil di layar,
-    // tidak perlu mengganggu pengguna yang sedang melihat tabel.
   } finally {
     isFetching = false;
   }
 }
 
+// Baris yang termasuk dashboard/jenis dokumen yang sedang aktif di sidebar kiri
+function jenisRows() {
+  return allRows.filter(r => (r['Jenis Dokumen'] || '') === currentJenis);
+}
+
 function renderStats() {
-  document.getElementById('statTotal').textContent = allRows.length;
-  document.getElementById('statPending').textContent = allRows.filter(r => r['Status'] === 'Menunggu Verifikasi').length;
-  document.getElementById('statVerified').textContent = allRows.filter(r => r['Status'] === 'Terverifikasi').length;
-  document.getElementById('statRejected').textContent = allRows.filter(r => r['Status'] === 'Ditolak').length;
+  const rows = jenisRows();
+  document.getElementById('statTotal').textContent = rows.length;
+  document.getElementById('statPending').textContent = rows.filter(r => r['Status'] === 'Menunggu Verifikasi').length;
+  document.getElementById('statVerified').textContent = rows.filter(r => r['Status'] === 'Terverifikasi').length;
+  document.getElementById('statRejected').textContent = rows.filter(r => r['Status'] === 'Ditolak').length;
 }
 
 function statusPillClass(status) {
@@ -118,16 +106,16 @@ function toWaLink(phoneRaw) {
 function renderTable() {
   const q = searchInput.value.trim().toLowerCase();
 
-  let rows = allRows.filter(r => {
+  let rows = jenisRows().filter(r => {
     if (currentFilter !== 'all' && r['Status'] !== currentFilter) return false;
     if (!q) return true;
-    const haystack = [r['Cabang'], r['Nama PIC'], r['No Payment Request'], r['ID']]
+    const haystack = [r['Cabang'], r['Nama PIC'], r['No Dokumen'], r['ID']]
       .join(' ').toLowerCase();
     return haystack.includes(q);
   });
 
   if (rows.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="em-icon">🗂️</div>Tidak ada data yang cocok.</div></td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="em-icon">🗂️</div>Tidak ada data yang cocok.</div></td></tr>`;
     return;
   }
 
@@ -141,7 +129,7 @@ function renderTable() {
             : `<span class="name name-truncate" title="${escapeHtml(r['Nama PIC'] || '')}">${escapeHtml(r['Nama PIC'] || '-')}</span>`}
         </div>
       </td>
-      <td class="cell-nc" title="${escapeHtml((r['No Payment Request'] || '').replace(/\n/g, ', '))}">${escapeHtml((r['No Payment Request'] || '-').split('\n')[0])}${r['No Payment Request'] && r['No Payment Request'].includes('\n') ? ' …' : ''}</td>
+      <td class="cell-nc" title="${escapeHtml((r['No Dokumen'] || '').replace(/\n/g, ', '))}">${escapeHtml((r['No Dokumen'] || '-').split('\n')[0])}${r['No Dokumen'] && r['No Dokumen'].includes('\n') ? ' …' : ''}</td>
       <td>
         <div class="cell-pic">
           ${r['File Berkas'] ? `<button class="link-inline-btn" data-url="${escapeHtml(r['File Berkas'])}" data-docid="${escapeHtml(r['ID'])}">Lihat PDF</button>` : '<span style="color:var(--ink-soft);">–</span>'}
@@ -156,17 +144,8 @@ function renderTable() {
           ${r['Tanggal Verifikasi'] ? `<span class="phone">${formatDate(r['Tanggal Verifikasi'])}</span>` : ''}
         </div>
       </td>
-      <td>${r['Status'] === 'Menunggu Verifikasi'
-          ? `<button class="btn btn-primary btn-sm" data-id="${r['ID']}">Verifikasi</button>`
-          : `<button class="btn btn-ghost btn-sm" data-id="${r['ID']}">Ubah</button>`}
-      </td>
     </tr>
   `).join('');
-
-
-  tableBody.querySelectorAll('button[data-id]').forEach(btn => {
-    btn.addEventListener('click', () => openModal(btn.dataset.id));
-  });
 
   tableBody.querySelectorAll('button.link-inline-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -179,11 +158,11 @@ function renderTable() {
   });
 }
 
-// Minta ID pengajuan (nomor NCT-xxxx/tgl) sebelum membuka link PDF -- PDF-nya sendiri
+// Minta ID pengajuan (nomor DTT-xxxx/tgl) sebelum membuka link PDF -- PDF-nya sendiri
 // tidak dienkripsi, ini murni gerbang di sisi website. Setiap pengajuan punya ID unik
 // sendiri, jadi PIC/admin harus tahu nomor ID dokumen tersebut untuk bisa membukanya.
 function openProtectedLink(url, correctId) {
-  const input = window.prompt('Masukkan ID pengajuan (contoh: NCT-0001/100726-K3M9) untuk membuka berkas ini:');
+  const input = window.prompt('Masukkan ID pengajuan (contoh: DTT-0001/100726-K3M9) untuk membuka berkas ini:');
   if (input === null) return; // dibatalkan
   if (input.trim().toUpperCase() === String(correctId).trim().toUpperCase()) {
     navigateTo(url);
@@ -204,8 +183,6 @@ function toDriveDownloadLink(url) {
 }
 
 // Membuka link di tab baru dengan cara yang lebih andal daripada window.open()
-// (window.open sering diblokir popup blocker browser kalau dipanggil setelah
-// dialog seperti prompt()/alert() -- teknik klik elemen <a> ini jauh lebih aman).
 function navigateTo(url) {
   const a = document.createElement('a');
   a.href = url;
@@ -220,6 +197,17 @@ function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 }
 
+// ---------- Sidebar: 3 dashboard per Jenis Dokumen ----------
+dashSidebar.querySelectorAll('.dash-menu-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    dashSidebar.querySelectorAll('.dash-menu-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentJenis = btn.dataset.jenis;
+    renderStats();
+    renderTable();
+  });
+});
+
 // ---------- Filter & search ----------
 filterTabs.querySelectorAll('button').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -232,129 +220,16 @@ filterTabs.querySelectorAll('button').forEach(btn => {
 searchInput.addEventListener('input', renderTable);
 refreshBtn.addEventListener('click', loadData);
 
-// ---------- Modal verifikasi ----------
-function openModal(id) {
-  activeRow = allRows.find(r => r['ID'] === id);
-  if (!activeRow) return;
-  modalSub.textContent = `Cabang ${activeRow['Cabang']} — PIC ${activeRow['Nama PIC']}`;
-  modalStatus.value = activeRow['Status'] === 'Ditolak' ? 'Ditolak' : 'Terverifikasi';
-  // Cocokkan data admin lama (mis. "widi" huruf kecil) ke opsi dropdown yang sesuai,
-  // supaya tidak tampil kosong hanya karena beda kapitalisasi.
-  const prevAdmin = (activeRow['Admin Verifikator'] || '').trim().toLowerCase();
-  const matchedOption = Array.from(modalAdmin.options).find(o => o.value.toLowerCase() === prevAdmin);
-  modalAdmin.value = matchedOption ? matchedOption.value : '';
-  modalCatatan.value = activeRow['Catatan Admin'] || '';
-  modalDzText.innerHTML = '<strong>Klik untuk pilih file</strong> (opsional jika hanya menolak)';
-  modalFile = null;
-  modalAuthPassword.value = '';
-  modalMsg.textContent = '';
-  modalMsg.className = 'status-msg';
-  modalOverlay.classList.add('open');
-  isModalOpen = true;
-}
-
-function closeModal() {
-  modalOverlay.classList.remove('open');
-  activeRow = null;
-  isModalOpen = false;
-}
-modalCancel.addEventListener('click', closeModal);
-modalAuthPassword.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    modalSubmit.click();
-  }
-});
-modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
-
-// Catatan: input file sudah di dalam <label>, klik label otomatis buka dialog file.
-// Tidak perlu modalFileInput.click() manual (itu penyebab bug harus klik 2x).
-modalFileInput.addEventListener('change', () => {
-  if (modalFileInput.files.length) {
-    const f = modalFileInput.files[0];
-    if (f.type !== 'application/pdf') {
-      modalDzText.innerHTML = '<span style="color:#C0392B;font-weight:600;">File harus PDF</span>';
-      modalFile = null;
-      return;
-    }
-    modalFile = f;
-    modalDzText.innerHTML = `<span class="dz-file">✓ ${f.name}</span>`;
-  }
-});
-
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-modalSubmit.addEventListener('click', async () => {
-  if (!activeRow) return;
-  modalMsg.textContent = '';
-  modalMsg.className = 'status-msg';
-
-  if (modalAuthPassword.value !== SUBMIT_GATE_PASSWORD) {
-    modalMsg.textContent = 'Password otorisasi salah.';
-    modalMsg.classList.add('err');
-    return;
-  }
-
-  modalSubmit.disabled = true;
-  modalSubmit.textContent = 'Menyimpan…';
-
-  try {
-    const payload = {
-      action: 'verify',
-      id: activeRow['ID'],
-      status: modalStatus.value,
-      admin: modalAdmin.value.trim(),
-      catatan: modalCatatan.value.trim(),
-      authPassword: modalAuthPassword.value
-    };
-    if (modalFile) {
-      payload.fileName = modalFile.name;
-      payload.fileData = await fileToBase64(modalFile);
-    }
-
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    });
-    const result = await res.json();
-    if (!result.success) throw new Error(result.error || 'Gagal menyimpan.');
-
-    modalMsg.textContent = 'Berhasil disimpan.';
-    modalMsg.classList.add('ok');
-    await loadData();
-    setTimeout(closeModal, 700);
-  } catch (err) {
-    modalMsg.textContent = 'Gagal: ' + err.message;
-    modalMsg.classList.add('err');
-  } finally {
-    modalSubmit.disabled = false;
-    modalSubmit.textContent = 'Simpan';
-  }
-});
-
 // ---------- Init ----------
 loadData();
 
 // ---------- Auto-refresh ----------
 // Setiap 3 detik, ambil data terbaru tanpa perlu klik tombol Muat Ulang.
-// Dilewati kalau: modal verifikasi sedang terbuka, ada request lain masih berjalan,
-// atau tab browser sedang tidak aktif (hemat kuota saat halaman ditinggal di background).
 setInterval(() => {
-  if (isModalOpen) return;
   if (document.hidden) return;
   loadData(true);
 }, 3000);
 
-// Begitu pengguna kembali ke tab ini setelah pindah tab, langsung refresh sekali
-// supaya data yang dilihat tidak basi.
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && !isModalOpen) loadData(true);
+  if (!document.hidden) loadData(true);
 });
