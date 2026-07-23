@@ -2,6 +2,9 @@
 const form = document.getElementById('submitForm');
 const cabangInput = document.getElementById('cabang');
 const cabangDatalist = document.getElementById('cabangDatalist');
+const jenisDokumenSelect = document.getElementById('jenisDokumen');
+const noDokumenInput = document.getElementById('noDokumen');
+const noDokumenHint = document.getElementById('noDokumenHint');
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('fileInput');
 const dzText = document.getElementById('dzText');
@@ -10,6 +13,36 @@ const statusMsg = document.getElementById('statusMsg');
 const submitResultBox = document.getElementById('submitResultBox');
 
 let selectedFile = null;
+
+// ---------- Contoh format No. Dokumen sesuai Jenis Dokumen yang dipilih ----------
+const NO_DOKUMEN_EXAMPLES = {
+  'NC - Aktual': {
+    hint: 'Contoh format: NC/XXX/XX/XX/XXXXX',
+    placeholder: 'NC/XXX/XX/XX/XXXXX'
+  },
+  'Non NC - Aktual (PO, KPB, DN, Dokumen Lainnya)': {
+    hint: 'Contoh format: PO/DXX/XX/XX/XXXXX · PROP/KPB3&4/KODECABANG/THP.. · DN/DXX/XX/XX/XXXXX · Dokumen lainnya menyesuaikan',
+    placeholder: `PO/DXX/XX/XX/XXXXX
+PROP/KPB3&4/KODECABANG/THP..
+DN/DXX/XX/XX/XXXXX
+Dokumen lainnya menyesuaikan`
+  },
+  'LPJ': {
+    hint: 'Contoh format: (AVP/XXX/XX/XX/XXXXX)',
+    placeholder: '(AVP/XXX/XX/XX/XXXXX)'
+  }
+};
+
+jenisDokumenSelect.addEventListener('change', () => {
+  const conf = NO_DOKUMEN_EXAMPLES[jenisDokumenSelect.value];
+  if (conf) {
+    noDokumenHint.textContent = conf.hint;
+    noDokumenInput.placeholder = conf.placeholder;
+  } else {
+    noDokumenHint.textContent = 'Pilih jenis dokumen terlebih dahulu untuk melihat contoh format nomor.';
+    noDokumenInput.placeholder = 'Pilih jenis dokumen terlebih dahulu';
+  }
+});
 
 // ---------- Isi datalist cabang dari daftar tetap (lihat assets/branch-config.js) ----------
 // Pakai <input> + <datalist> (bukan <select>) supaya bisa diketik/di-search,
@@ -83,8 +116,8 @@ form.addEventListener('submit', async (e) => {
   const cabang = cabangInput.value.trim().toUpperCase();
   const namaPic = document.getElementById('namaPic').value.trim();
   const noTelpon = document.getElementById('noTelpon').value.trim();
-  const noPaymentRequest = document.getElementById('noPaymentRequest').value.trim();
-  const linkPaymentRequest = document.getElementById('linkPaymentRequest').value.trim();
+  const jenisDokumen = jenisDokumenSelect.value;
+  const noDokumen = noDokumenInput.value.trim();
 
   if (!cabang || !BRANCH_LIST.includes(cabang)) {
     statusMsg.textContent = 'Kode cabang tidak valid. Pilih salah satu dari daftar yang muncul saat mengetik.';
@@ -101,13 +134,13 @@ form.addEventListener('submit', async (e) => {
     statusMsg.classList.add('err');
     return;
   }
-  if (!noPaymentRequest) {
-    statusMsg.textContent = 'No. Payment Request wajib diisi.';
+  if (!jenisDokumen) {
+    statusMsg.textContent = 'Jenis Dokumen wajib dipilih.';
     statusMsg.classList.add('err');
     return;
   }
-  if (!linkPaymentRequest) {
-    statusMsg.textContent = 'Link Payment Request wajib diisi.';
+  if (!noDokumen) {
+    statusMsg.textContent = 'No. Dokumen wajib diisi.';
     statusMsg.classList.add('err');
     return;
   }
@@ -143,8 +176,8 @@ form.addEventListener('submit', async (e) => {
       cabang: cabang,
       namaPic: namaPic,
       noTelpon: noTelpon,
-      noPaymentRequest: noPaymentRequest,
-      linkPaymentRequest: linkPaymentRequest,
+      jenisDokumen: jenisDokumen,
+      noDokumen: noDokumen,
       fileName: selectedFile.name,
       fileData: fileData
     };
@@ -172,6 +205,8 @@ form.addEventListener('submit', async (e) => {
       `;
       form.reset();
       dzText.innerHTML = '<strong>Klik untuk pilih file</strong> atau seret PDF ke sini';
+      noDokumenHint.textContent = 'Pilih jenis dokumen terlebih dahulu untuk melihat contoh format nomor.';
+      noDokumenInput.placeholder = 'Pilih jenis dokumen terlebih dahulu';
       selectedFile = null;
       // Auto-scroll supaya notifikasi ID pengajuan pasti terlihat, tidak perlu scroll manual.
       submitResultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
