@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kirim Berkas — NC Tracker Tax</title>
+<title>Kirim Berkas — Doc Tracker Tax</title>
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body class="compact-form">
 
 <div class="topbar">
   <div class="topbar-inner">
-    <div class="brand"><span class="brand-mark">NC</span> Tracker Tax</div>
+    <div class="brand"><span class="brand-mark">Doc</span> Tracker Tax</div>
     <nav class="nav-tabs">
       <a href="index.html" class="active">Kirim Berkas</a>
       <a href="tracking.html">Tracking &amp; Verifikasi</a>
@@ -20,8 +20,8 @@
 
 <div class="wrap">
   <div class="page-head">
-    <h1>Kirim Berkas Verifikasi Pajak</h1>
-    <p>Formulir pengajuan verifikasi pajak pada Payment Request (NC). Pengisian wajib memakai huruf KAPITAL. Unggah berkas dalam format PDF.</p>
+    <h1>Kirim Berkas Verifikasi Dokumen</h1>
+    <p>Formulir pengajuan verifikasi berkas (cek pajak). Pengisian wajib memakai huruf KAPITAL. Unggah berkas dalam format PDF.</p>
   </div>
 
   <div class="card">
@@ -45,16 +45,19 @@
         </div>
 
         <div class="field required">
-          <label for="noPaymentRequest">No. Payment Request (NC)</label>
-          <div class="hint">Jika lebih dari satu, tulis satu per baris.</div>
-          <textarea id="noPaymentRequest" rows="2" placeholder="NC/XXX/XX/XXXXX
-NC/XXX/XX/XXXXX" required></textarea>
+          <label for="jenisDokumen">Pilih Jenis Dokumen</label>
+          <select id="jenisDokumen" required>
+            <option value="" disabled selected>Pilih jenis dokumen</option>
+            <option value="NC - Aktual">NC - Aktual</option>
+            <option value="Non NC - Aktual (PO, KPB, DN, Dokumen Lainnya)">Non NC - Aktual (PO, KPB, DN, Dokumen Lainnya)</option>
+            <option value="LPJ">LPJ</option>
+          </select>
         </div>
 
-        <div class="field required">
-          <label for="linkPaymentRequest">Link Payment Request</label>
-          <div class="hint">Jika lebih dari satu, tulis satu per baris.</div>
-          <textarea id="linkPaymentRequest" rows="2" placeholder="https://teds2.tunasdwipamatra.com/web#id=....." required></textarea>
+        <div class="field full required">
+          <label for="noDokumen">No. Dokumen</label>
+          <div class="hint" id="noDokumenHint">Pilih jenis dokumen terlebih dahulu untuk melihat contoh format nomor.</div>
+          <textarea id="noDokumen" rows="2" placeholder="Pilih jenis dokumen terlebih dahulu" required></textarea>
         </div>
 
         <div class="field full required">
